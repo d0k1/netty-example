@@ -1,5 +1,6 @@
 package com.focusit.netty.server;
 
+import com.focusit.netty.client.Sample;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -7,6 +8,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.handler.codec.string.StringDecoder;
 import io.netty.util.ReferenceCountUtil;
 
 import java.util.List;
@@ -48,20 +50,8 @@ public class App {
 		bossGroup.shutdownGracefully();
 	}
 
-	public static ReplayingDecoder getDecoder(){
-		return new ReplayingDecoder<Void>(){
-
-			@Override
-			protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-				int count = in.readableBytes();
-				if(count>3){
-
-					byte msg[] = new byte[3];
-					in.readBytes(msg);
-					out.add(new String(msg));
-				}
-			}
-		};
+	public static ChannelHandler getDecoder(){
+		return new SampleDecoder();
 	}
 
 	public static ChannelHandler getHandler(){
@@ -69,7 +59,7 @@ public class App {
 
 			@Override
 			public void channelRead(ChannelHandlerContext ctx, Object msg) { // (2)
-				System.err.println(msg.getClass().getName());
+				System.err.println((Sample)msg);
 				// Discard the received data silently.
 				ReferenceCountUtil.release(msg);
 			}

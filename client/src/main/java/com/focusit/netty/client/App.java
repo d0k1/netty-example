@@ -8,6 +8,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.string.StringEncoder;
 
 import java.net.SocketAddress;
 
@@ -29,7 +30,7 @@ public class App {
 		b.handler(new ChannelInitializer<SocketChannel>() {
 			@Override
 			public void initChannel(SocketChannel ch) throws Exception {
-					ch.pipeline().addLast(getHandler());
+					ch.pipeline().addLast(new SampleEncoder(), getHandler());
 			}
 		});
 
@@ -43,9 +44,12 @@ public class App {
 					for(int i=0;i<10;i++) {
 						try {
 							if (channel.isWritable()){
-								ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer();
-								buffer.writeBytes("123".getBytes());
-								lastWrite = channel.write(buffer);
+								Sample sample = new Sample(123, "Test"+System.currentTimeMillis());
+								System.out.println(sample);
+								lastWrite = channel.write(sample);
+								channel.flush();
+							} else {
+								return;
 							}
 							Thread.sleep(200);
 
@@ -53,15 +57,14 @@ public class App {
 							e.printStackTrace();
 						}
 					}
-					channel.flush();
-//					if(lastWrite!=null) {
-//						try {
-//							lastWrite.sync();
-//							lastWrite = null;
-//						} catch (InterruptedException e) {
-//							e.printStackTrace();
-//						}
-//					}
+					if(lastWrite!=null) {
+						try {
+							lastWrite.sync();
+							lastWrite = null;
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		});
